@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player de Música</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            display: none; /* Esconde o conteúdo até a senha ser correta */
+        }
+        .player {
+            background: #fff;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+        .player:hover {
+            transform: translateY(-10px);
+        }
+        .player h1 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        .player .info {
+            margin: 10px 0;
+        }
+        .player .info p {
+            margin: 5px 0;
+            font-size: 1em;
+        }
+        .player .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .player .controls button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin: 0 10px;
+            font-size: 20px;
+            transition: color 0.3s ease;
+        }
+        .player .controls button:hover {
+            color: #ff4081;
+        }
+        .player .slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .player .heart, .player .rating {
+            position: absolute;
+            top: 10px;
+        }
+        .player .heart {
+            right: 10px;
+            color: #ff4081;
+            cursor: pointer;
+        }
+        .player .rating {
+            left: 10px;
+        }
+        .player .rating span {
+            color: gold;
+            margin-right: 2px;
+            font-size: 18px;
+        }
+        .waveform {
+            display: none; /* Esconde a barra cinza */
+        }
+        .cover {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .footer-text {
+            font-style: italic;
+            color: #888;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="player">
+        <img id="cover-image" class="cover" src="https://www.dropbox.com/scl/fi/tprdn7mx9uu4zzukn22m4/OIG4.jpeg?rlkey=mm5gh7rcubv5mxwlnuwq9zw1e&st=4771o0sg&raw=1" alt="Capa da Música">
+        <div class="info">
+            <p id="song-title">Para a Senhorita Deborah</p>
+            <p id="artist-name">De um Cara Estranho</p>
+        </div>
+        <div class="heart">&#10084;</div>
+        <div class="rating">
+            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
+        </div>
+        <div class="waveform"></div>
+        <div class="controls">
+            <button onclick="previousSong()">&#9664;</button>
+            <button id="play-pause-button" onclick="playAudio()">&#9654;</button>
+            <button onclick="nextSong()">&#9654;&#9654;</button>
+        </div>
+        <input type="range" id="seekbar" class="slider" value="0" max="100" step="1">
+        <audio id="audio" src=""></audio>
+        <div class="footer-text">Desfrute com moderação</div>
+    </div>
+
+    <script>
+        var password = prompt("Por favor, insira a senha para acessar: OBS uma fruta que você gosta muito e pouca gente sabe");
+        if (password === "macaúba") {
+            document.body.style.display = "flex";
+        } else {
+            alert("Senha incorreta! Acesso negado.");
+        }
+
+        var audio = document.getElementById('audio');
+        var seekbar = document.getElementById('seekbar');
+        var playPauseButton = document.getElementById('play-pause-button');
+        var songs = [
+            {
+                src: "https://www.dropbox.com/scl/fi/oehty5hsrx8q131hbtr8c/oi.mp3?rlkey=vuxmu42da9w6llwnjsizt00l3&st=fcpc89rw&raw=1",
+                title: "Para a Senhorita Deborah",
+                artist: "De um Cara Estranho",
+                cover: "https://www.dropbox.com/scl/fi/tprdn7mx9uu4zzukn22m4/OIG4.jpeg?rlkey=mm5gh7rcubv5mxwlnuwq9zw1e&st=4771o0sg&raw=1"
+            },
+            {
+                src: "https://www.dropbox.com/scl/fi/fhihry0uhuv5xokzivp8s/musica-2.mp3?rlkey=7md1gt8qi7d8g4ua1aq1bybpq&st=yqw5xote&raw=1",
+                title: "Para a Senhorita Deborah",
+                artist: "De um Cara Estranho",
+                cover: "https://www.dropbox.com/scl/fi/tprdn7mx9uu4zzukn22m4/OIG4.jpeg?rlkey=mm5gh7rcubv5mxwlnuwq9zw1e&st=4771o0sg&raw=1"
+            },
+            {
+                src: "https://www.dropbox.com/scl/fi/vbq3l7hvyof88jm9pb2ia/musica-3.mp3?rlkey=g7bhrzq5kvpqzfv7sgvgae0n7&st=qsuks04u&raw=1",
+                title: "Olha essa",
+                artist: "Bem dahora hein",
+                cover: "https://www.dropbox.com/scl/fi/tprdn7mx9uu4zzukn22m4/OIG4.jpeg?rlkey=mm5gh7rcubv5mxwlnuwq9zw1e&st=4771o0sg&raw=1"
+            },
+        ];
+        var currentSongIndex = 0;
+
+        function loadSong(index) {
+            audio.src = songs[index].src;
+            document.getElementById('song-title').innerText = songs[index].title;
+            document.getElementById('artist-name').innerText = songs[index].artist;
+            document.getElementById('cover-image').src = songs[index].cover;
+        }
+
+        function playAudio() {
+            if (audio.paused) {
+                audio.play();
+                playPauseButton.innerHTML = '&#10074;&#10074;';
+            } else {
+                audio.pause();
+                playPauseButton.innerHTML = '&#9654;';
+            }
+        }
+
+        function previousSong() {
+            currentSongIndex = (currentSongIndex === 0) ? songs.length - 1 : currentSongIndex - 1;
+            loadSong(currentSongIndex);
+            playAudio();
+        }
+
+        function nextSong() {
+            currentSongIndex = (currentSongIndex === songs.length - 1) ? 0 : currentSongIndex + 1;
+            loadSong(currentSongIndex);
+            playAudio();
+        }
+        
+        audio.ontimeupdate = function() {
+            seekbar.value = (audio.currentTime / audio.duration) * 100;
+        };
+
+        seekbar.oninput = function() {
+            audio.currentTime = (seekbar.value / 100) * audio.duration;
+        };
+
+        // Carregar a primeira música ao carregar a página
+        loadSong(currentSongIndex);
+    </script>
+</body>
+</html>
